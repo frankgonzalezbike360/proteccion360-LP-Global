@@ -990,6 +990,7 @@ p{color:var(--text);line-height:1.68}
 .quote-error[hidden]{display:none}
 .quote-privacy{font-size:12px;line-height:1.55;color:var(--text)}
 </style>
+<!-- V6.23: ventanas coordinadas, conversación conservada y foco en formulario. -->
 </head>
 <body>
 <header class="site-header">
@@ -1454,7 +1455,11 @@ function showQuoteError(message){const error=$('#quoteError');error.textContent=
 function localDateISO(){const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`}
 dynamic.addEventListener('input',()=>{dynamic.querySelectorAll('input,select').forEach(el=>el.setCustomValidity(''));showQuoteError('');saveQuoteDraft()});
 dynamic.addEventListener('change',saveQuoteDraft);
-function openQuote(product=''){quoteModal.classList.add('open');document.body.classList.add('locked');qStep=1;selectedProduct=product||'';renderChoices();setQStep(product?2:1);if(product) renderFields()}
+function prepareWorkWindow(target){
+ closeAsk();closeDrawer();
+ document.querySelectorAll('.modal.open').forEach(modal=>{if(modal!==target)modal.classList.remove('open')});
+}
+function openQuote(product=''){prepareWorkWindow(quoteModal);quoteModal.classList.add('open');document.body.classList.add('locked');qStep=1;selectedProduct=product||'';renderChoices();setQStep(product?2:1);if(product) renderFields()}
 function closeQuote(){quoteModal.classList.remove('open');document.body.classList.remove('locked')}
 $$('[data-open-quote]').forEach(b=>b.onclick=()=>{closeDrawer();openQuote()});
 $$('[data-product]').forEach(b=>b.onclick=()=>openQuote(b.dataset.product));
@@ -1590,12 +1595,13 @@ const askState={
 };
 
 function openAsk(){
+  if(document.querySelector('.modal.open'))return;
   askShell.classList.add('open');
   if(!askMsgs.dataset.started){
     askMsgs.dataset.started='1';
     welcomeAsk();
   }
-  setTimeout(()=>askInput.focus(),70)
+  setTimeout(()=>{if(askShell.classList.contains('open')&&!document.querySelector('.modal.open'))askInput.focus()},70)
 }
 function closeAsk(){askShell.classList.remove('open')}
 $('#askLaunch').onclick=openAsk;
@@ -2374,6 +2380,7 @@ function normalizeGlobalHealthText(s){
 
 function openGlobalHealthDirectory(){
   const modal=document.getElementById('globalHealthDirectoryModal');
+  prepareWorkWindow(modal);
   modal.classList.add('open');
   document.body.classList.add('locked');
   renderGlobalHealthDirectory();
@@ -2434,6 +2441,7 @@ function normalizeInterText(s){
 
 function openInterDirectory(){
   const modal=document.getElementById('interDirectoryModal');
+  prepareWorkWindow(modal);
   modal.classList.add('open');
   document.body.classList.add('locked');
   renderInterDirectory();
@@ -2580,10 +2588,11 @@ document.getElementById('quoteForm').addEventListener('submit',()=>window.fgAnal
   const next=dialogs.find(el=>el.classList.contains('open'))||null;if(next===active)return;
   const prior=active;release();
   if(next){
-   if(!prior)returnFocus=document.activeElement;
+   if(!prior){returnFocus=document.activeElement;if(returnFocus&&returnFocus.closest('#askShell'))returnFocus=document.getElementById('askLaunch')}
    active=next;
    [...document.body.children].forEach(el=>{if(el!==next&&!el.contains(next)&&!['SCRIPT','STYLE'].includes(el.tagName)){inertBefore.set(el,el.inert);el.inert=true}});
-   (controls(next)[0]||next).focus();
+   const firstField=next.querySelector('.form-step.active input,.form-step.active select,input[type="search"]');
+   (firstField||controls(next)[0]||next).focus();
   }else{active=null;if(returnFocus&&document.contains(returnFocus))returnFocus.focus();returnFocus=null}
  }
  const observer=new MutationObserver(sync);dialogs.forEach(el=>observer.observe(el,{attributes:true,attributeFilter:['class']}));
