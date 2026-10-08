@@ -985,6 +985,11 @@ p{color:var(--text);line-height:1.68}
   .hero h1{font-size:clamp(32px,8.6vw,46px)}
 }
 </style>
+<style id="fg-qa-style-v622">
+.quote-error{padding:10px 12px;border:1px solid #a62c20;border-radius:10px;color:#8c251b;background:#fff7f5;font-size:13px}
+.quote-error[hidden]{display:none}
+.quote-privacy{font-size:12px;line-height:1.55;color:var(--text)}
+</style>
 </head>
 <body>
 <header class="site-header">
@@ -1072,7 +1077,7 @@ p{color:var(--text);line-height:1.68}
   if(images.length!==slides.length)return;
   let current=0,stopped=window.matchMedia('(prefers-reduced-motion: reduce)').matches,timer;
   const clear=()=>{if(timer){clearTimeout(timer);timer=undefined}};
-  function schedule(){clear();if(!stopped&&!document.hidden)timer=setTimeout(()=>show(current+1),10000)}
+  function schedule(){clear();if(!stopped&&!document.hidden)timer=setTimeout(()=>show(current+1),6000)}
   function show(index){
     current=(index+slides.length)%slides.length;
     images.forEach((image,i)=>image.classList.toggle('is-current',i===current));
@@ -1383,8 +1388,8 @@ p{color:var(--text);line-height:1.68}
 <div class="eyebrow">Cotización</div>
 <h2 id="quoteTitle">¿Qué necesitas proteger?</h2>
 <div class="progress"><div class="bar"><span id="quoteBar"></span></div><div class="stepmeta"><span id="stepNum">PASO 1</span><span id="stepName">Producto</span></div></div>
-<p class="quote-note">Al finalizar, abrirás WhatsApp para enviar tu solicitud a Francisco.</p>
-<form id="quoteForm">
+<p class="quote-note">Cuéntame qué deseas proteger. Revisaré tu solicitud para orientarte sobre las alternativas disponibles.<br><br>Al finalizar, se abrirá WhatsApp con tu mensaje preparado. Revísalo y pulsa enviar para compartirlo conmigo.</p>
+<form id="quoteForm"><p id="quoteError" role="alert" class="quote-error" hidden></p>
 <div class="form-step active" data-step="1">
 <div class="choice-grid" id="productChoices"></div>
 <div class="form-actions"><span></span><button class="btn primary" data-next-step="" type="button">Continuar</button></div>
@@ -1394,8 +1399,8 @@ p{color:var(--text);line-height:1.68}
 <div class="form-actions"><button class="btn secondary" data-prev-step="" type="button">Volver</button><button class="btn primary" data-next-step="" type="button">Revisar solicitud</button></div>
 </div>
 <div class="form-step" data-step="3">
-<div class="review"><pre id="reviewText"></pre></div>
-<div class="form-actions"><button class="btn secondary" data-prev-step="" type="button">Volver</button><button class="btn aqua" type="submit">Enviar a Francisco por WhatsApp</button></div>
+<div class="review"><pre id="reviewText"></pre></div><p class="quote-privacy">Al continuar, se abrirá WhatsApp con los datos que ingresaste. Podrás revisar el mensaje antes de enviarlo a Francisco González para atender tu solicitud.</p>
+<div class="form-actions"><button class="btn secondary" data-prev-step="" type="button">Volver</button><button class="btn aqua" type="submit">Continuar por WhatsApp</button></div>
 </div>
 </form>
 </div>
@@ -1440,6 +1445,15 @@ const products={
 };
 const quoteModal=$('#quoteModal'), quoteForm=$('#quoteForm'), dynamic=$('#dynamicFields');
 let qStep=1, selectedProduct='';
+const quoteDrafts={};
+function saveQuoteDraft(){
+ const product=dynamic.dataset.product;if(!product)return;
+ quoteDrafts[product]=[...dynamic.querySelectorAll('input,select')].map(el=>[el.name,el.value]);
+}
+function showQuoteError(message){const error=$('#quoteError');error.textContent=message;error.hidden=!message}
+function localDateISO(){const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`}
+dynamic.addEventListener('input',()=>{dynamic.querySelectorAll('input,select').forEach(el=>el.setCustomValidity(''));showQuoteError('');saveQuoteDraft()});
+dynamic.addEventListener('change',saveQuoteDraft);
 function openQuote(product=''){quoteModal.classList.add('open');document.body.classList.add('locked');qStep=1;selectedProduct=product||'';renderChoices();setQStep(product?2:1);if(product) renderFields()}
 function closeQuote(){quoteModal.classList.remove('open');document.body.classList.remove('locked')}
 $$('[data-open-quote]').forEach(b=>b.onclick=()=>{closeDrawer();openQuote()});
@@ -1450,17 +1464,18 @@ function renderChoices(){
  const c=$('#productChoices'); c.innerHTML='';
  Object.entries(products).forEach(([k,v])=>{
   const b=document.createElement('button');b.type='button';b.className='choice'+(selectedProduct===k?' selected':'');b.textContent=v.label;
-  b.onclick=()=>{selectedProduct=k;renderChoices()};c.appendChild(b)
+  b.setAttribute('aria-pressed',String(selectedProduct===k));b.onclick=()=>{selectedProduct=k;showQuoteError('');renderChoices()};c.appendChild(b)
  });
 }
 function setQStep(n){
- qStep=n; $$('.form-step').forEach(x=>x.classList.toggle('active',+x.dataset.step===n));
+ showQuoteError('');qStep=n; $$('.form-step').forEach(x=>x.classList.toggle('active',+x.dataset.step===n));
  $('#quoteBar').style.width=(n/3*100)+'%'; $('#stepNum').textContent='PASO '+n;
  $('#stepName').textContent=n===1?'Producto':n===2?'Información indispensable':'Revisión';
  if(n===2) renderFields(); if(n===3) buildReview();
 }
 $$('[data-next-step]').forEach(b=>b.onclick=()=>{
- if(qStep===1&&!selectedProduct)return;
+ if(qStep===1&&!selectedProduct){showQuoteError('Selecciona qué deseas proteger.');return;}
+ showQuoteError('');
  if(qStep===2&&!validateFields())return;
  setQStep(qStep+1)
 });
@@ -1472,6 +1487,8 @@ function field(name,label,type='text',opts=''){
 }
 function renderFields(){
  if(!selectedProduct)return;
+ if(dynamic.dataset.product===selectedProduct&&dynamic.children.length)return;
+ saveQuoteDraft();
  let h=field('name','Nombre completo')+field('email','Correo electrónico','email');
  if(['salud_internacional','salud_nacional'].includes(selectedProduct)){
   h+=`<div class="field"><label>${selectedProduct==='salud_internacional'?'¿Quiénes deseas proteger?':'Grupo familiar'}</label><div class="members" id="members"><div class="member"><div class="field"><label for="quote-member-1">Miembro 1 · Fecha de nacimiento</label><input id="quote-member-1" name="member[]" type="date" required></div></div></div><button class="add-member" type="button" id="addMember">+ Agregar otro miembro</button></div>`
@@ -1481,16 +1498,32 @@ function renderFields(){
  if(selectedProduct==='vehiculo')h+=field('brand','Marca')+field('model','Modelo')+field('year','Año','number','min="1900" max="2100"');
  if(selectedProduct==='patrimonio')h+=`<div class="field"><label for="quote-asset">¿Qué deseas proteger?</label><select id="quote-asset" name="asset" required><option value="">Selecciona</option><option>Hogar</option><option>Comercio</option><option>Oficina</option><option>Empresa</option><option>Otro</option></select></div>`;
  if(selectedProduct==='fianzas')h+=`<div class="field"><label for="quote-operation">¿Qué necesitas respaldar?</label><select id="quote-operation" name="operation" required><option value="">Selecciona</option><option>Contrato</option><option>Proyecto</option><option>Empresa</option><option>Otra operación</option></select></div>`;
- dynamic.innerHTML=h;
- const add=$('#addMember'); if(add)add.onclick=addFamilyMember;
+ dynamic.innerHTML=h;dynamic.dataset.product=selectedProduct;
+ const add=$('#addMember');if(add)add.onclick=addFamilyMember;
+ const draft=quoteDrafts[selectedProduct];
+ if(draft){
+   const members=draft.filter(([name])=>name==='member[]');
+   for(let i=1;i<members.length;i++)addFamilyMember();
+   const used={};draft.forEach(([name,value])=>{const fields=[...dynamic.querySelectorAll('input,select')].filter(el=>el.name===name);const i=used[name]||0;if(fields[i])fields[i].value=value;used[name]=i+1});
+ }
+ dynamic.querySelectorAll('input[type="date"]').forEach(el=>{if(el.name==='dob'||el.name==='member[]')el.max=localDateISO()});
+ dynamic.querySelectorAll('input,select').forEach(el=>el.addEventListener('invalid',()=>{if(el.validity.valueMissing)el.setCustomValidity('Completa este campo para continuar.');else if(el.validity.typeMismatch&&el.type==='email')el.setCustomValidity('Revisa tu correo electrónico.');else if(el.validity.rangeOverflow&&(el.name==='dob'||el.name==='member[]'))el.setCustomValidity('La fecha de nacimiento no puede ser posterior a hoy.')}));
 }
 function addFamilyMember(){
  const list=$('#members'), i=list.children.length+1, row=document.createElement('div');row.className='member';
  row.innerHTML=`<div class="field"><label for="quote-member-${i}">Miembro ${i} · Fecha de nacimiento</label><input id="quote-member-${i}" name="member[]" type="date" required></div><button type="button" class="remove-member">×</button>`;
- row.querySelector('button').onclick=()=>{row.remove();renumberMembers()}; list.appendChild(row)
+ row.querySelector('button').setAttribute('aria-label','Eliminar miembro');
+ row.querySelector('button').onclick=()=>{row.remove();renumberMembers();saveQuoteDraft()};list.appendChild(row);renumberMembers();row.querySelector('input').max=localDateISO()
 }
-function renumberMembers(){$$('#members .member').forEach((r,i)=>r.querySelector('label').textContent=`Miembro ${i+1} · Fecha de nacimiento`)}
-function validateFields(){return [...dynamic.querySelectorAll('input,select')].every(el=>{if(!el.checkValidity()){el.reportValidity();return false}return true})}
+function renumberMembers(){$$('#members .member').forEach((r,i)=>{const input=r.querySelector('input'),label=r.querySelector('label');input.id=`quote-member-${i+1}`;label.htmlFor=input.id;label.textContent=`Miembro ${i+1} · Fecha de nacimiento`})}
+function validateFields(){
+ const fields=[...dynamic.querySelectorAll('input,select')];fields.forEach(el=>el.setCustomValidity(''));
+ const departure=dynamic.querySelector('[name="departure"]'),back=dynamic.querySelector('[name="return"]');
+ if(departure&&departure.value&&departure.value<localDateISO())departure.setCustomValidity('Si tu viaje ya comenzó, consulta con Francisco las opciones disponibles.');
+ if(departure&&back&&departure.value&&back.value&&back.value<departure.value)back.setCustomValidity('La fecha de regreso debe ser igual o posterior a la salida.');
+ for(const el of fields){if(!el.checkValidity()){showQuoteError(el.validationMessage);el.reportValidity();return false}}
+ saveQuoteDraft();return true;
+}
 function formatDate(v){if(!v)return '';let [y,m,d]=v.split('-');return `${d}/${m}/${y}`}
 function getData(){return new FormData(quoteForm)}
 function buildReview(){
@@ -1518,7 +1551,7 @@ function quoteWhatsApp(){
  if(selectedProduct==='fianzas')m=`Hola Francisco 👋📑\n\nQuisiera recibir información sobre una *Fianza con La Internacional de Seguros*.\n\n*Tipo de operación:*\n${d.get('operation')}\n\n*Datos de contacto:*\nNombre: ${name}\nEmail: ${email}\n\nAgradecería tu orientación sobre el tipo de fianza que podría corresponder y los requisitos iniciales para evaluar la operación.\n\nQuedo atento(a). Gracias.`;
  return m
 }
-quoteForm.onsubmit=e=>{e.preventDefault();window.open(wa(quoteWhatsApp()),'_blank','noopener')};
+quoteForm.onsubmit=e=>{e.preventDefault();if(!validateFields())return;window.open(wa(quoteWhatsApp()),'_blank','noopener')};
 
 /* Client help */
 function serviceMessage(type){
@@ -1617,21 +1650,21 @@ const ASK_FAQS=[
     id:1, cat:'orientacion',
     q:'¿Qué tipo de seguro necesito según mi situación?',
     keys:['que tipo de seguro necesito','seguro necesito','segun mi situacion'],
-    a:'Depende de tu estilo de vida, tu presupuesto y si buscas tranquilidad local o respaldo global. Los seguros de salud internacionales te dan acceso a la mejor red médica del mundo, ideal si quieres la libertad de atenderte en el país o en el exterior. Cuéntame un poco más sobre ti para orientarte mejor.',
+    a:"Empecemos por lo que deseas proteger: tu salud, tu familia, tu patrimonio o tus metas futuras. Tu lugar de residencia, prioridades y presupuesto nos ayudarán a evaluar alternativas. Francisco puede acompañarte a revisar sus beneficios y condiciones.",
     buttons:[['Cuéntame mi situación','discover_need','orange'],['Hablar con Francisco','handoff','aqua']]
   },
   {
     id:2, cat:'orientacion',
     q:'¿Cuál es la diferencia entre un seguro de salud nacional y uno internacional?',
     keys:['diferencia entre un seguro de salud nacional y uno internacional','diferencia salud nacional internacional','nacional o internacional'],
-    a:'Un seguro nacional te limita a la red del país, mientras que uno internacional te protege sin fronteras, permitiéndote acceder a centros de excelencia médica en el extranjero ante casos complejos. Si quieres una asesoría personalizada sobre cuál te conviene, puedo conectarte con Francisco González.',
+    a:"La diferencia principal está en dónde puedes recibir atención y bajo qué condiciones. Un seguro nacional se enfoca en la protección dentro del país; uno internacional puede incluir atención en otros países, según el plan. Revisemos territorio, red médica, deducible y beneficios para elegir contigo.",
     buttons:[['Hablar con Francisco','handoff','aqua'],['Ver opciones de salud','discover:health']]
   },
   {
     id:3, cat:'orientacion',
     q:'¿Qué información necesitas para prepararme una cotización a la medida?',
     keys:['informacion necesitas para prepararme una cotizacion','que necesitas para cotizar','datos para cotizacion','cotizacion a la medida'],
-    a:'Para ofrecerte la opción ideal que se ajuste a ti, necesito saber: tu fecha de nacimiento (o edad), si incluirás a tu pareja o hijos, y el país o ciudad donde resides actualmente. Con esos datos te armo una propuesta o comunico tu caso directamente con Francisco.',
+    a:"Depende de la solución que buscas. El formulario te pedirá datos iniciales para preparar tu solicitud. Francisco revisará la información y te indicará si necesita algún dato adicional para elaborar una propuesta.",
     buttons:[['Quiero cotizar','quote','orange'],['Hablar con Francisco','handoff','aqua']]
   },
   {
@@ -1645,21 +1678,21 @@ const ASK_FAQS=[
     id:5, cat:'salud',
     q:'¿Qué es un deducible y cómo funciona?',
     keys:['que es un deducible','como funciona el deducible','deducible'],
-    a:'Es el monto fijo anual que pagas de tus primeros gastos médicos antes de que la compañía de seguros comience a cubrir el resto. Por ejemplo, si tu deducible es de $1,000, tú cubres los primeros $1,000 en facturas médicas del año y la póliza se encarga de los gastos que superen esa cifra.',
+    a:"Es la parte de los gastos cubiertos que te corresponde asumir, según tu póliza. Su monto y forma de aplicación pueden variar. Por ejemplo, si tu plan aplica un deducible anual de US$1.000, asumirías ese monto de gastos elegibles antes de que la aseguradora participe conforme al contrato. Superarlo no significa que cualquier gasto quede cubierto: también aplican límites, exclusiones y otras condiciones.",
     buttons:[['Hablar con Francisco','handoff','aqua']]
   },
   {
     id:6, cat:'salud',
     q:'¿Qué es una preexistencia y cómo puede afectar la contratación?',
     keys:['que es una preexistencia','preexistencia','preexistencias'],
-    a:'Una preexistencia es cualquier condición de salud o enfermedad que ya tenías antes de contratar la póliza. Estas deben declararse de forma transparente al solicitar el seguro, ya que las aseguradoras las evalúan de forma particular para determinar si aplican periodos de espera o exclusiones específicas.',
+    a:"Es una condición de salud previa que la aseguradora evalúa conforme a sus requisitos y a la definición de la póliza. Debes responder con exactitud las preguntas de la solicitud. Su aceptación y las condiciones de cobertura requieren evaluación de la aseguradora.",
     buttons:[['Evaluar mi caso con Francisco','handoff','aqua']]
   },
   {
     id:7, cat:'salud',
     q:'¿Qué es un periodo de espera?',
     keys:['que es un periodo de espera','periodo de espera','periodos de espera','carencia'],
-    a:'Es el tiempo determinado que debe pasar desde que contratas la póliza hasta que puedes hacer uso de ciertas coberturas específicas (como maternidad o tratamientos determinados).',
+    a:"Es un tiempo establecido en la póliza durante el cual determinados beneficios todavía no están disponibles. Su duración y aplicación dependen del plan y del beneficio. Conviene revisarlo antes de contratar.",
     buttons:[['Hablar con Francisco','handoff','aqua']]
   },
   {
@@ -2529,6 +2562,48 @@ if(el.hasAttribute('data-product'))window.fgAnalytics.track('product_interest',{
 if(el.id==='askLaunch'||el.id==='drawerAsk'||el.hasAttribute('data-open-faq')||el.hasAttribute('data-ask-topic'))window.fgAnalytics.track('ask_frank_open');
 });
 document.getElementById('quoteForm').addEventListener('submit',()=>window.fgAnalytics.track('quote_whatsapp',{product:selectedProduct}));
+</script>
+<script id="fg-qa-v622">
+/* Gestión accesible de ventanas y etiquetas. */
+(()=>{
+ const dialogs=[...document.querySelectorAll('.modal,#drawer')];
+ let active=null,returnFocus=null;const inertBefore=new Map();
+ const visible=e=>!!(e.offsetWidth||e.offsetHeight||e.getClientRects().length)&&getComputedStyle(e).visibility!=='hidden';
+ const controls=e=>[...e.querySelectorAll('a[href],button,input,select,textarea,[tabindex]')].filter(x=>!x.disabled&&x.tabIndex>=0&&visible(x));
+ dialogs.forEach(el=>{
+  el.setAttribute('role','dialog');el.setAttribute('aria-modal','true');el.tabIndex=-1;
+  const title=el.querySelector('h2');if(title){if(!title.id)title.id=el.id+'-title';el.setAttribute('aria-labelledby',title.id)}else el.setAttribute('aria-label','Menú principal');
+  el.querySelectorAll('.modal-close,#menuClose').forEach(button=>button.setAttribute('aria-label',el.id==='quoteModal'?'Cerrar cotizador':el.id==='drawer'?'Cerrar menú':'Cerrar directorio'));
+ });
+ function release(){inertBefore.forEach((value,el)=>{el.inert=value});inertBefore.clear()}
+ function sync(){
+  const next=dialogs.find(el=>el.classList.contains('open'))||null;if(next===active)return;
+  const prior=active;release();
+  if(next){
+   if(!prior)returnFocus=document.activeElement;
+   active=next;
+   [...document.body.children].forEach(el=>{if(el!==next&&!el.contains(next)&&!['SCRIPT','STYLE'].includes(el.tagName)){inertBefore.set(el,el.inert);el.inert=true}});
+   (controls(next)[0]||next).focus();
+  }else{active=null;if(returnFocus&&document.contains(returnFocus))returnFocus.focus();returnFocus=null}
+ }
+ const observer=new MutationObserver(sync);dialogs.forEach(el=>observer.observe(el,{attributes:true,attributeFilter:['class']}));
+ document.addEventListener('keydown',e=>{
+  if(!active||e.key!=='Tab')return;const list=controls(active);if(!list.length){e.preventDefault();active.focus();return}
+  const first=list[0],last=list[list.length-1];
+  if(!active.contains(document.activeElement)){e.preventDefault();first.focus()}
+  else if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus()}
+  else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus()}
+ });
+ [['globalHealthSearch','Buscar clínica, ciudad o estado'],['globalHealthState','Estado'],['globalHealthCategory','Categoría'],['interSearch','Buscar clínica, ciudad o dirección'],['interState','Estado'],['interType','Tipo de red']].forEach(([id,label])=>{const el=document.getElementById(id);if(el)el.setAttribute('aria-label',label)});
+ document.getElementById('askInput').setAttribute('aria-label','Escribe tu pregunta');
+ document.getElementById('askSend').setAttribute('aria-label','Enviar pregunta');
+ document.getElementById('askClose').setAttribute('aria-label','Cerrar Ask Frank');
+ document.getElementById('askMsgs').setAttribute('role','log');
+ document.getElementById('askMsgs').setAttribute('aria-live','polite');
+ document.getElementById('askClose').addEventListener('click',()=>document.getElementById('askLaunch').focus());
+ const hero=document.getElementById('inicio');
+ hero.addEventListener('focusin',event=>{const pause=document.getElementById('heroPause');if(event.target!==pause&&pause.getAttribute('aria-pressed')==='false')pause.click()});
+})();
 </script>
 </body>
 </html>
