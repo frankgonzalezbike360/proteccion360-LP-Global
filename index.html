@@ -3000,4 +3000,44 @@ function openMenu(){if(opened)return;opened=true;previous=document.activeElement
 opener.onclick=()=>opened?closeMenu():openMenu();closer.onclick=closeMenu;backdrop.onclick=closeMenu;panel.querySelectorAll('a').forEach(a=>a.addEventListener('click',closeMenu));
 document.addEventListener('keydown',e=>{if(!opened)return;if(e.key==='Escape'){e.preventDefault();closeMenu();return;}if(e.key==='Tab'){const items=focusable(),first=items[0],last=items[items.length-1];if(!panel.contains(document.activeElement)){e.preventDefault();first.focus();}else if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}}});
 if(typeof window.openDrawer==='function')window.openDrawer=openMenu;if(typeof window.closeDrawer==='function')window.closeDrawer=closeMenu;
-})();</script><dialog id="fg-save-dialog" aria-labelledby="fg-save-title"><button type="button" class="fg-save-close" aria-label="Cerrar">×</button><h2 id="fg-save-title">Guardar esta página</h2><p>Conserva el enlace para volver cuando quieras.</p><button type="button" id="fg-save-copy">Copiar enlace</button><p id="fg-save-status" role="status" aria-live="polite"></p><input id="fg-save-link" type="text" readonly aria-label="Enlace de esta página" hidden><details><summary>Cómo guardarla en favoritos</summary><p><strong>En celular:</strong> abre el menú de tu navegador y busca «Añadir a favoritos», «Marcadores» o el icono de estrella. Si estás dentro de otra aplicación, abre primero la página en tu navegador.</p><p><strong>En computadora:</strong> pulsa Ctrl + D (Windows) o ⌘ + D (Mac) y confirma dónde quieres guardarla.</p><p>La página quedará guardada cuando completes ese paso en tu navegador.</p></details></dialog><script id="fg-save-page-script">(()=>{const dialog=document.getElementById('fg-save-dialog'),copy=document.getElementById('fg-save-copy'),status=document.getElementById('fg-save-status'),link=document.getElementById('fg-save-link');const url="https://frankgonzalezbike360.github.io/proteccion360-LP-Global/";let trigger;document.querySelectorAll('[data-fg-save-open]').forEach(button=>button.addEventListener('click',()=>{trigger=button;status.textContent='';link.hidden=true;link.value=url;dialog.querySelector('details').open=false;dialog.showModal()}));dialog.querySelector('.fg-save-close').addEventListener('click',()=>dialog.close());dialog.addEventListener('close',()=>{if(trigger)trigger.focus()});dialog.addEventListener('click',event=>{if(event.target!==dialog)return;const r=dialog.getBoundingClientRect();if(event.clientX<r.left||event.clientX>r.right||event.clientY<r.top||event.clientY>r.bottom)dialog.close()});copy.addEventListener('click',async()=>{try{await navigator.clipboard.writeText(url);status.textContent='Enlace copiado. Pégalo en tus notas o en tu chat personal para conservarlo.'}catch(error){link.hidden=false;link.focus();link.select();status.textContent='Mantén pulsado el enlace o usa Ctrl + C / ⌘ + C para copiarlo.'}})})();</script></body></html>
+})();</script><dialog id="fg-save-dialog" aria-labelledby="fg-save-title"><button type="button" class="fg-save-close" aria-label="Cerrar">×</button><h2 id="fg-save-title">Guardar esta página</h2><p>Conserva el enlace para volver cuando quieras.</p><button type="button" id="fg-save-copy">Copiar enlace</button><p id="fg-save-status" role="status" aria-live="polite"></p><input id="fg-save-link" type="text" readonly aria-label="Enlace de esta página" hidden><details><summary>Cómo guardarla en favoritos</summary><p><strong>En celular:</strong> abre el menú de tu navegador y busca «Añadir a favoritos», «Marcadores» o el icono de estrella. Si estás dentro de otra aplicación, abre primero la página en tu navegador.</p><p><strong>En computadora:</strong> pulsa Ctrl + D (Windows) o ⌘ + D (Mac) y confirma dónde quieres guardarla.</p><p>La página quedará guardada cuando completes ese paso en tu navegador.</p></details></dialog><script id="fg-save-page-script">(()=>{const dialog=document.getElementById('fg-save-dialog'),copy=document.getElementById('fg-save-copy'),status=document.getElementById('fg-save-status'),link=document.getElementById('fg-save-link');const url="https://frankgonzalezbike360.github.io/proteccion360-LP-Global/";let trigger;document.querySelectorAll('[data-fg-save-open]').forEach(button=>button.addEventListener('click',()=>{trigger=button;status.textContent='';link.hidden=true;link.value=url;dialog.querySelector('details').open=false;dialog.showModal()}));dialog.querySelector('.fg-save-close').addEventListener('click',()=>dialog.close());dialog.addEventListener('close',()=>{if(trigger)trigger.focus()});dialog.addEventListener('click',event=>{if(event.target!==dialog)return;const r=dialog.getBoundingClientRect();if(event.clientX<r.left||event.clientX>r.right||event.clientY<r.top||event.clientY>r.bottom)dialog.close()});copy.addEventListener('click',async()=>{try{await navigator.clipboard.writeText(url);status.textContent='Enlace copiado. Pégalo en tus notas o en tu chat personal para conservarlo.'}catch(error){link.hidden=false;link.focus();link.select();status.textContent='Mantén pulsado el enlace o usa Ctrl + C / ⌘ + C para copiarlo.'}})})();</script>
+<style id="fg-fix-cards-8-9-overlay-final-20261030">
+/* Solamente tarjetas 8 y 9: contenido siempre SOBRE la fotografía, inclusive móvil. */
+#soluciones .lp-carousel-v4 .lp-carousel-track > article.card.editorial[data-index="7"],
+#soluciones .lp-carousel-v4 .lp-carousel-track > article.card.editorial[data-index="8"] {
+position:relative!important;isolation:isolate!important;display:flex!important;flex-direction:column!important;justify-content:flex-end!important;overflow:hidden!important;background:#08375b!important;height:425px!important;min-height:425px!important;padding:0!important;
+}
+#soluciones .lp-carousel-v4 .lp-carousel-track > article.card.editorial[data-index="7"] > .media,
+#soluciones .lp-carousel-v4 .lp-carousel-track > article.card.editorial[data-index="8"] > .media {
+position:absolute!important;inset:0!important;width:100%!important;height:100%!important;min-height:0!important;margin:0!important;padding:0!important;z-index:0!important;overflow:hidden!important;
+}
+#soluciones .lp-carousel-v4 .lp-carousel-track > article.card.editorial[data-index="7"] > .media > img:first-child,
+#soluciones .lp-carousel-v4 .lp-carousel-track > article.card.editorial[data-index="8"] > .media > img:first-child {
+position:absolute!important;inset:0!important;width:100%!important;height:100%!important;object-fit:cover!important;object-position:center top!important;
+}
+#soluciones .lp-carousel-v4 .lp-carousel-track > article.card.editorial[data-index="7"]::after,
+#soluciones .lp-carousel-v4 .lp-carousel-track > article.card.editorial[data-index="8"]::after {
+content:""!important;position:absolute!important;inset:0!important;z-index:1!important;pointer-events:none!important;background:linear-gradient(to bottom,transparent 23%,rgba(3,32,67,.15) 42%,rgba(3,32,67,.85) 74%,#032043 100%)!important;
+}
+#soluciones .lp-carousel-v4 .lp-carousel-track > article.card.editorial[data-index="7"] > .brand,
+#soluciones .lp-carousel-v4 .lp-carousel-track > article.card.editorial[data-index="8"] > .brand,
+#soluciones .lp-carousel-v4 .lp-carousel-track > article.card.editorial[data-index="7"] > .main,
+#soluciones .lp-carousel-v4 .lp-carousel-track > article.card.editorial[data-index="8"] > .main {
+position:relative!important;z-index:2!important;flex:0 0 auto!important;width:100%!important;margin:0!important;transform:none!important;background:transparent!important;box-sizing:border-box!important;
+}
+#soluciones .lp-carousel-v4 .lp-carousel-track > article.card.editorial[data-index="7"] > .main,
+#soluciones .lp-carousel-v4 .lp-carousel-track > article.card.editorial[data-index="8"] > .main {
+display:flex!important;flex-direction:column!important;align-items:flex-start!important;padding:4px 16px 14px!important;gap:7px!important;
+}
+#soluciones .lp-carousel-v4 .lp-carousel-track > article.card.editorial[data-index="7"] > .brand,
+#soluciones .lp-carousel-v4 .lp-carousel-track > article.card.editorial[data-index="8"] > .brand {padding:0 16px 3px!important;}
+#soluciones .lp-carousel-v4 .lp-carousel-track > article.card.editorial[data-index="7"] > .main h2,
+#soluciones .lp-carousel-v4 .lp-carousel-track > article.card.editorial[data-index="8"] > .main h2,
+#soluciones .lp-carousel-v4 .lp-carousel-track > article.card.editorial[data-index="7"] > .main p,
+#soluciones .lp-carousel-v4 .lp-carousel-track > article.card.editorial[data-index="8"] > .main p {color:#fff!important;}
+@media(max-width:760px){
+#soluciones .lp-carousel-v4 .lp-carousel-track > article.card.editorial[data-index="7"],
+#soluciones .lp-carousel-v4 .lp-carousel-track > article.card.editorial[data-index="8"] {height:405px!important;min-height:405px!important;}
+}
+</style>
+</body></html>
