@@ -848,6 +848,29 @@ p{color:var(--text);line-height:1.68}
 #soluciones .lp-carousel-track .card[data-index="1"] .media{background:#173f65;}
 #soluciones .lp-carousel-track .card[data-index="1"] .media>img{object-fit:cover;object-position:center 54%;}
 @media(max-width:760px){#soluciones .lp-carousel-track .card[data-index="1"] .media{background:#173f65;}#soluciones .lp-carousel-track .card[data-index="1"] .media>img{object-fit:contain !important;object-position:center center !important;padding:0;max-width:100%;max-height:100%;}}
+
+/* FG P360 · Corrección producción 2026-10-30: texto dentro de fotos tarjetas 8 y 9, escritorio y móvil. */
+#soluciones .lp-carousel-v4 .lp-carousel-track > article.card[data-index="7"],
+#soluciones .lp-carousel-v4 .lp-carousel-track > article.card[data-index="8"] {position:relative!important;display:flex!important;flex-direction:column!important;justify-content:flex-end!important;isolation:isolate!important;overflow:hidden!important;padding:0!important;height:425px!important;min-height:425px!important;background:#08375b!important;}
+#soluciones .lp-carousel-v4 .lp-carousel-track > article.card[data-index="7"] > .media,
+#soluciones .lp-carousel-v4 .lp-carousel-track > article.card[data-index="8"] > .media {position:absolute!important;inset:0!important;width:100%!important;height:100%!important;z-index:0!important;margin:0!important;overflow:hidden!important;}
+#soluciones .lp-carousel-v4 .lp-carousel-track > article.card[data-index="7"] > .media > img:first-child,
+#soluciones .lp-carousel-v4 .lp-carousel-track > article.card[data-index="8"] > .media > img:first-child {position:absolute!important;inset:0!important;width:100%!important;height:100%!important;object-fit:cover!important;object-position:center top!important;}
+#soluciones .lp-carousel-v4 .lp-carousel-track > article.card[data-index="7"]::after,
+#soluciones .lp-carousel-v4 .lp-carousel-track > article.card[data-index="8"]::after {content:""!important;position:absolute!important;inset:0!important;z-index:1!important;pointer-events:none!important;background:linear-gradient(to bottom,transparent 24%,rgba(3,32,67,.2) 44%,rgba(3,32,67,.87) 75%,#032043 100%)!important;}
+#soluciones .lp-carousel-v4 .lp-carousel-track > article.card[data-index="7"] > .brand,
+#soluciones .lp-carousel-v4 .lp-carousel-track > article.card[data-index="8"] > .brand,
+#soluciones .lp-carousel-v4 .lp-carousel-track > article.card[data-index="7"] > .main,
+#soluciones .lp-carousel-v4 .lp-carousel-track > article.card[data-index="8"] > .main {position:relative!important;z-index:2!important;flex:0 0 auto!important;width:100%!important;box-sizing:border-box!important;transform:none!important;margin:0!important;background:transparent!important;}
+#soluciones .lp-carousel-v4 .lp-carousel-track > article.card[data-index="7"] > .main,
+#soluciones .lp-carousel-v4 .lp-carousel-track > article.card[data-index="8"] > .main {display:flex!important;flex-direction:column!important;align-items:flex-start!important;padding:4px 16px 14px!important;gap:7px!important;}
+#soluciones .lp-carousel-v4 .lp-carousel-track > article.card[data-index="7"] > .brand,
+#soluciones .lp-carousel-v4 .lp-carousel-track > article.card[data-index="8"] > .brand {padding:0 16px 3px!important;}
+#soluciones .lp-carousel-v4 .lp-carousel-track > article.card[data-index="7"] > .main h2,
+#soluciones .lp-carousel-v4 .lp-carousel-track > article.card[data-index="8"] > .main h2,
+#soluciones .lp-carousel-v4 .lp-carousel-track > article.card[data-index="7"] > .main p,
+#soluciones .lp-carousel-v4 .lp-carousel-track > article.card[data-index="8"] > .main p {color:#fff!important;}
+@media(max-width:760px){#soluciones .lp-carousel-v4 .lp-carousel-track > article.card[data-index="7"],#soluciones .lp-carousel-v4 .lp-carousel-track > article.card[data-index="8"] {height:405px!important;min-height:405px!important;}}
 </style>
 <style>
 /* V6.5 DEV — ajustes aprobados: Servicio Integral más compacto + eliminación de la 3ra tarjeta de EMPRENDE 360 */
