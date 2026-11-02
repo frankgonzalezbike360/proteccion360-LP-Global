@@ -1847,8 +1847,11 @@ function renderFields(){
  if(dynamic.dataset.product===selectedProduct&&dynamic.children.length)return;
  saveQuoteDraft();
  let h=field('name','Nombre completo')+field('email','Correo electrónico','email');
- if(['salud_internacional','salud_nacional'].includes(selectedProduct)){
+ if(selectedProduct==='salud_internacional'){
   h+=`<div class="field"><label>${selectedProduct==='salud_internacional'?'¿Quiénes deseas proteger?':'Grupo familiar'}</label><div class="members" id="members"><div class="member"><div class="field"><label for="quote-member-1">Miembro 1 · Fecha de nacimiento</label><input id="quote-member-1" name="member[]" type="date" required></div></div></div><button class="add-member" type="button" id="addMember">+ Agregar otro miembro</button></div>`
+ }
+ if(selectedProduct==='salud_nacional'){
+  h='<p><strong>Grupo familiar:</strong> Los hijos de 24 años o más deben solicitar una cotización individual.</p>'+h+'<div id="nationalPeople"></div><button type="button" class="add-member" id="addSpouse">+ Agregar cónyuge</button> <button type="button" class="add-member" id="addNational">+ Agregar hijo/a</button>';
  }
  if(selectedProduct==='vida')h+=field('dob','Fecha de nacimiento','date');
  if(selectedProduct==='viajero')h+=field('destination','Destino')+`<div class="form-grid">${field('departure','Fecha de salida','date')}${field('return','Fecha de regreso','date')}</div>`+field('travelers','Número de viajeros','number','min="1" value="1"');
@@ -1856,6 +1859,7 @@ function renderFields(){
  if(selectedProduct==='patrimonio')h+=`<div class="field"><label for="quote-asset">¿Qué deseas proteger?</label><select id="quote-asset" name="asset" required><option value="">Selecciona</option><option>Hogar</option><option>Comercio</option><option>Oficina</option><option>Empresa</option><option>Otro</option></select></div>`;
  if(selectedProduct==='fianzas')h+=`<div class="field"><label for="quote-operation">¿Qué necesitas respaldar?</label><select id="quote-operation" name="operation" required><option value="">Selecciona</option><option>Contrato</option><option>Proyecto</option><option>Empresa</option><option>Otra operación</option></select></div>`;
  dynamic.innerHTML=h;dynamic.dataset.product=selectedProduct;
+ if(selectedProduct==='salud_nacional')setupNational(quoteDrafts[selectedProduct]||[]);
  const add=$('#addMember');if(add)add.onclick=addFamilyMember;
  const draft=quoteDrafts[selectedProduct];
  if(draft){
@@ -1865,6 +1869,48 @@ function renderFields(){
  }
  dynamic.querySelectorAll('input[type="date"]').forEach(el=>{if(el.name==='dob'||el.name==='member[]')el.max=localDateISO()});
  dynamic.querySelectorAll('input,select').forEach(el=>el.addEventListener('invalid',()=>{if(el.validity.valueMissing)el.setCustomValidity('Completa este campo para continuar.');else if(el.validity.typeMismatch&&el.type==='email')el.setCustomValidity('Revisa tu correo electrónico.');else if(el.validity.rangeOverflow&&(el.name==='dob'||el.name==='member[]'))el.setCustomValidity('La fecha de nacimiento no puede ser posterior a hoy.')}));
+}
+function setupNational(draft){
+ const list=$('#nationalPeople'), add=$('#addNational');
+ function person(self,role){
+  const row=document.createElement('fieldset');
+  row.style.cssText='min-width:0;margin:14px 0;padding:12px;border:1px solid #ccd7df;border-radius:12px';
+  const select=(name,title,options)=>'<label class="field">'+title+'<select required name="'+name+'"><option value="">Selecciona</option>'+options.map(x=>'<option>'+x+'</option>').join('')+'</select></label>';
+  row.dataset.role=role;
+  row.dataset.self=self?'yes':'no';
+  row.innerHTML='<legend>'+(self?'Tus datos como titular':role)+'</legend>'+
+   (self?'':'<label class="field">Nombre y apellido<input name="relativeName" required></label>'+('<input type="hidden" name="relation" value="'+role+'">'))+
+   select('personSex','Sexo',['Femenino','Masculino'])+'<label class="field">Fecha de nacimiento<input type="date" name="personBirth" required max="'+localDateISO()+'"></label>';
+  if(!self){const b=document.createElement('button');b.type='button';b.className='add-member';b.textContent='Quitar familiar';b.onclick=()=>{row.remove();sync()};row.append(b)}
+  return row;
+ }
+ const spouse=$('#addSpouse');
+ function sync(){
+  spouse.disabled=!!list.querySelector('[data-role="Cónyuge"]');
+  spouse.hidden=spouse.disabled;
+ }
+ list.append(person(true,'Titular'));
+ for(const [key,role] of draft){
+  if(key==='relation' && (role==='Hijo/a'||role==='Cónyuge'))list.append(person(false,role));
+ }
+ spouse.onclick=()=>{
+  if(spouse.disabled)return;
+  const row=person(false,'Cónyuge');
+  list.firstElementChild.after(row);
+  sync();row.querySelector('input').focus();
+ };
+ add.onclick=()=>{
+  const row=person(false,'Hijo/a');
+  list.append(row);row.querySelector('input').focus();
+ };
+ sync();
+}
+function nationalSummary(){
+ return [...document.querySelectorAll('#nationalPeople fieldset')].map((row,i)=>{
+  const value=key=>row.querySelector('[name="'+key+'"]').value;
+  const self=row.dataset.self==='yes';
+  return (i+1)+'. '+(self?dynamic.querySelector('[name="name"]').value:value('relativeName'))+' · '+(self?'Titular':value('relation'))+' · '+value('personSex')+' · '+formatDate(value('personBirth'));
+ }).join('\n');
 }
 function addFamilyMember(){
  const list=$('#members'), i=list.children.length+1, row=document.createElement('div');row.className='member';
@@ -1878,6 +1924,14 @@ function validateFields(){
  const departure=dynamic.querySelector('[name="departure"]'),back=dynamic.querySelector('[name="return"]');
  if(departure&&departure.value&&departure.value<localDateISO())departure.setCustomValidity('Si tu viaje ya comenzó, consulta con Francisco las opciones disponibles.');
  if(departure&&back&&departure.value&&back.value&&back.value<departure.value)back.setCustomValidity('La fecha de regreso debe ser igual o posterior a la salida.');
+ if(selectedProduct==='salud_nacional'){
+  const today=localDateISO();
+  dynamic.querySelectorAll('[data-self="no"]').forEach(row=>{
+   const birth=row.querySelector('[name="personBirth"]');
+   if(row.querySelector('[name="relation"]').value==='Hijo/a' && birth.value && Number(today.slice(0,4))-Number(birth.value.slice(0,4))-(today.slice(5)<birth.value.slice(5)?1:0)>=24)
+    birth.setCustomValidity('A partir de los 24 años, los hijos deben cotizar individualmente.');
+  });
+ }
  for(const el of fields){if(!el.checkValidity()){showQuoteError(el.validationMessage);el.reportValidity();return false}}
  saveQuoteDraft();return true;
 }
@@ -1885,13 +1939,13 @@ function formatDate(v){if(!v)return '';let [y,m,d]=v.split('-');return `${d}/${m
 function getData(){return new FormData(quoteForm)}
 function buildReview(){
  const d=getData();let lines=[`Producto: ${products[selectedProduct].label}`,`Nombre completo: ${d.get('name')}`,`Correo electrónico: ${d.get('email')}`];
- if(['salud_internacional','salud_nacional'].includes(selectedProduct))d.getAll('member[]').forEach((v,i)=>lines.push(`Miembro ${i+1}: ${formatDate(v)}`));
+ if(selectedProduct==='salud_internacional')d.getAll('member[]').forEach((v,i)=>lines.push(`Miembro ${i+1}: ${formatDate(v)}`));
  if(selectedProduct==='vida')lines.push(`Fecha de nacimiento: ${formatDate(d.get('dob'))}`);
  if(selectedProduct==='viajero')lines.push(`Destino: ${d.get('destination')}`,`Fecha de salida: ${formatDate(d.get('departure'))}`,`Fecha de regreso: ${formatDate(d.get('return'))}`,`Número de viajeros: ${d.get('travelers')}`);
  if(selectedProduct==='vehiculo')lines.push(`Marca: ${d.get('brand')}`,`Modelo: ${d.get('model')}`,`Año: ${d.get('year')}`);
  if(selectedProduct==='patrimonio')lines.push(`¿Qué deseas proteger?: ${d.get('asset')}`);
  if(selectedProduct==='fianzas')lines.push(`¿Qué necesitas respaldar?: ${d.get('operation')}`);
- $('#reviewText').textContent=lines.join('\n')
+ $('#reviewText').textContent=selectedProduct==='salud_nacional'?quoteWhatsApp():lines.join('\n')
 }
 function quoteWhatsApp(){
  const d=getData(), name=d.get('name'), email=d.get('email'); let m='';
@@ -1899,7 +1953,7 @@ function quoteWhatsApp(){
    m=`Hola Francisco 👋\n\nEstoy interesado(a) en solicitar una *cotización de Seguro de Salud Internacional de Gastos Médicos Mayores*.\n\n*Mis datos:*\nNombre: ${name}\nEmail: ${email}\n\n*Personas que deseo incluir:*\n${d.getAll('member[]').map((v,i)=>`Miembro ${i+1}: ${formatDate(v)}`).join('\n')}\n\nMe gustaría conocer las alternativas disponibles y recibir tu orientación para seleccionar la protección que mejor se adapte a nuestro grupo familiar.\n\nQuedo atento(a). Gracias.`
  }
  if(selectedProduct==='salud_nacional'){
-   m=`Hola Francisco 👋\n\nEstoy interesado(a) en solicitar una *cotización de Seguro de Salud Nacional con La Internacional de Seguros*.\n\n*Mis datos:*\nNombre: ${name}\nEmail: ${email}\n\n*Grupo familiar a proteger:*\n${d.getAll('member[]').map((v,i)=>`Miembro ${i+1}: ${formatDate(v)}`).join('\n')}\n\nQuisiera conocer las opciones disponibles para protección médica dentro de Venezuela y recibir tu recomendación de acuerdo con nuestras necesidades.\n\nQuedo atento(a) a tu orientación. Gracias.`
+   m=`Hola Francisco 👋\n\nEstoy interesado(a) en solicitar una *cotización de Seguro de Salud Nacional con La Internacional de Seguros*.\n\n*Mis datos:*\nNombre: ${name}\nEmail: ${email}\n\n*Grupo familiar a proteger:*\n${nationalSummary()}\n\nQuisiera conocer las opciones disponibles para protección médica dentro de Venezuela y recibir tu recomendación de acuerdo con nuestras necesidades.\n\nQuedo atento(a) a tu orientación. Gracias.`
  }
  if(selectedProduct==='vida')m=`Hola Francisco 👋\n\nEstoy interesado(a) en recibir información y una *cotización de Seguro de Vida*.\n\n*Mis datos:*\nNombre: ${name}\nEmail: ${email}\nFecha de nacimiento: ${formatDate(d.get('dob'))}\n\nMe gustaría conocer las alternativas disponibles y recibir tu orientación sobre qué tipo de protección podría ser adecuada para mi situación.\n\nQuedo atento(a). Gracias.`;
  if(selectedProduct==='viajero')m=`Hola Francisco 👋✈️\n\nQuiero solicitar una *cotización de Seguro de Viajero* para un próximo viaje.\n\n*Datos del viaje:*\nDestino: ${d.get('destination')}\nFecha de salida: ${formatDate(d.get('departure'))}\nFecha de regreso: ${formatDate(d.get('return'))}\nNúmero de viajeros: ${d.get('travelers')}\n\n*Datos de contacto:*\nNombre: ${name}\nEmail: ${email}\n\nMe gustaría conocer la alternativa de protección disponible para estas fechas y recibir tu orientación antes del viaje.\n\nQuedo atento(a). Gracias.`;
