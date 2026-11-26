@@ -1602,7 +1602,7 @@ body.menu-locked{overflow:hidden!important}
   const title=document.getElementById('heroTitle'),sub=document.getElementById('heroSub'),body=document.getElementById('heroBody');
   const count=document.getElementById('heroCount'),pause=document.getElementById('heroPause');
   if(images.length!==slides.length)return;
-  let current=0,stopped=true,timer;
+  let current=0,stopped=false,timer;
   const clear=()=>{if(timer){clearTimeout(timer);timer=undefined}};
   function schedule(){clear();if(!stopped&&!document.hidden)timer=setTimeout(()=>show(current+1),6000)}
   function show(index){
@@ -3078,7 +3078,7 @@ document.getElementById('quoteForm').addEventListener('submit',()=>window.fgAnal
  document.getElementById('askMsgs').setAttribute('aria-live','polite');
  document.getElementById('askClose').addEventListener('click',()=>document.getElementById('askLaunch').focus());
  const hero=document.getElementById('inicio');
- hero.addEventListener('focusin',event=>{const pause=document.getElementById('heroPause');if(event.target!==pause&&pause.getAttribute('aria-pressed')==='false')pause.click()});
+ // El carrusel solo se pausa mediante su control de pausa.
 })();
 </script>
 <script>
